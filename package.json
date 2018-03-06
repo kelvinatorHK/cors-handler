@@ -1,0 +1,15 @@
+{
+  "name": "cors-handler",
+  "version": "0.0.1",
+  "description": "A wrapper to the handler function add the CORS header to the response",
+  "main": "index.js",
+  "scripts": {
+    "test": "nyc mocha"
+  },
+  "author": "Kelvin Lau <kelvinhome@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "mocha": "^5.0.2",
+    "nyc": "^11.4.1"
+  }
+}
