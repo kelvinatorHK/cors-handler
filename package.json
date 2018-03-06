@@ -1,6 +1,6 @@
 {
   "name": "cors-handler",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A wrapper to the handler function add the CORS header to the response",
   "main": "index.js",
   "scripts": {
