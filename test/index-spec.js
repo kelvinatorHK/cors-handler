@@ -10,60 +10,186 @@ describe('index', function() {
             callback(null, res);
         };
 
-        it('should have CORS headers when it does not have any options', function(done) {
-            let event = {
-                httpMethod: 'GET'
-            };
+        it('should have CORS headers when the caller does not provide any options', function(done) {
+            let event = {};
             let context = {};
 
 
             index.cors(handler)(event, context, function(err, res) {
-                console.log('res:', res);
-                assert.notEqual(res.headers, null);
+                assert.equal(res.headers['Access-Control-Allow-Methods'], '*');
                 done();
             });
         });
 
-        it('should have CORS headers when it provides options', function(done) {
-            let event = {
-                httpMethod: 'GET'
-            };
+        it('should have CORS headers when providing options', function(done) {
+            let event = {};
             let context = {};
             let options = {
-                origins: [], 
+                origins: null,
                 allowCredentials: false,
-                allowMethod: ['*'],
+                allowMethods: null,
                 maxAge: null
             };
 
             index.cors(handler, options)(event, context, function(err, res) {
-                console.log('res:', res);
-                assert.notEqual(res.headers, null);
+                assert.equal(res.headers['Access-Control-Allow-Methods'], '*');
                 done();
             });
         });
 
-        it('should have CORS header when it has origin', function(done) {
+        it('should have no CORS when headers.origin is an empty array', function(done) {
             let event = {
-                httpMethod: 'GET',
+                headers: {
+                    origin: 'http://localhost'
+                }
+            };
+            let context = {};
+            let options = {
+                origins: [],
+                allowCredentials: false,
+                allowMethods: null,
+                maxAge: null
+            };
+
+            index.cors(handler, options)(event, context, function(err, res) {
+                assert.equal(res.headers, null);
+                done();
+            });
+        });
+
+        it('should have no CORS when there is NO event.headers, but there is origins in the options', function(done) {
+            let event = {};
+            let context = {};
+            let options = {
+                origins: ['https://test.nuskin.com'],
+                allowCredentials: false,
+                allowMethods: null,
+                maxAge: null
+            };
+
+            index.cors(handler, options)(event, context, function(err, res) {
+                assert.equal(res.headers, null);
+                done();
+            });
+        });
+
+        it('should have no CORS when headers.origin is not in the options.origins', function(done) {
+            let event = {
+                headers: {
+                    origin: 'http://localhost'
+                }
+            };
+            let context = {};
+            let options = {
+                origins: ['https://www.nuskin.com', 'https://test.nuskin.com'],
+                allowCredentials: false,
+                allowMethods: null,
+                maxAge: null
+            };
+
+            index.cors(handler, options)(event, context, function(err, res) {
+                assert.equal(res.headers, null);
+                done();
+            });
+        });
+
+        it('should have CORS header when headers.origin matching the options.origins', function(done) {
+            let event = {
                 headers: {
                     origin: 'https://www.nuskin.com'
                 }
             };
             let context = {};
             let options = {
-                origins: ['https://www.nuskin.com'], 
-                // origins: ["https://www.nuskin.com", "https://test.nuskin.com", "https://dev.nuskin.com"],
+                origins: ['https://www.nuskin.com'],
                 allowCredentials: false,
-                allowMethod: ['*'],
+                allowMethods: null,
                 maxAge: null
             };
 
             index.cors(handler, options)(event, context, function(err, res) {
-                console.log('res:', res);
-                assert.notEqual(res.headers, null);
+                assert.equal(res.headers['Access-Control-Allow-Origin'], 'https://www.nuskin.com');
                 done();
             });
         });
+
+        it('should have correct Access-Control-Allow-Methods when allowMethods is set', function(done) {
+            let event = {
+                headers: {
+                    origin: 'https://www.nuskin.com'
+                }
+            };
+            let context = {};
+            let options = {
+                origins: null,
+                allowCredentials: false,
+                allowMethods: ['GET', 'POST']
+            };
+
+            index.cors(handler, options)(event, context, function(err, res) {
+                assert.equal(res.headers['Access-Control-Allow-Methods'], 'GET,POST');
+                done();
+            });
+        });
+
+        it('should have correct Access-Control-Allow-Headers when allowHeaders is set', function(done) {
+            let event = {
+                headers: {
+                    origin: 'https://www.nuskin.com'
+                }
+            };
+            let context = {};
+            let options = {
+                origins: null,
+                allowHeaders: ['Content-Type', 'X-Amz-Date', 'Authorization', 'X-Api-Key']
+            };
+
+            index.cors(handler, options)(event, context, function(err, res) {
+                assert.equal(res.headers['Access-Control-Allow-Headers'],
+                    'Content-Type,X-Amz-Date,Authorization,X-Api-Key');
+                done();
+            });
+        });
+
+        it('should have correct Access-Control-Max-Age when maxAge is set', function(done) {
+            let event = {
+                headers: {
+                    origin: 'https://www.nuskin.com'
+                }
+            };
+            let context = {};
+            let options = {
+                origins: ['https://www.nuskin.com'],
+                allowCredentials: false,
+                allowMethods: null,
+                maxAge: 1800
+            };
+
+            index.cors(handler, options)(event, context, function(err, res) {
+                assert.equal(res.headers['Access-Control-Max-Age'], 1800);
+                done();
+            });
+        });
+
+        it('should have CORS headers even though options has a function prototype', function(done) {
+            let event = {
+                headers: {
+                    origin: 'http://localhost'
+                }
+            };
+            let context = {};
+
+            function TestObj() {}
+            TestObj.prototype.gender = 'male';
+            let options = new TestObj();
+            options.origins = [];
+
+            index.cors(handler, options)(event, context, function(err, res) {
+                assert.equal(res.headers, null);
+                done();
+            });
+        });
+
+
     });
 });
